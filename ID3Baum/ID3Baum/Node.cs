@@ -10,11 +10,13 @@ namespace ID3Baum
     {
         public int AttrIdx { get; set; }
         public List<Node> Children { get; set; }
-        public double Result { get; set; }
+        public Type Result { get; set; }
 
-        public Node()
+        public Node(int attrIdx, Type result )
         {
-
+            AttrIdx = attrIdx;
+            Result = result;
+            Children = new();
         }
 
         public Enum Evaluate(Enum[] data)
