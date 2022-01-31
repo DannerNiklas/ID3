@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\Schule\\5BI\\Infi_AI\\ID3\\ID3Baum\\ID3Baum\\ID3Baum.csproj",
+      "projectUniqueName": "D:\\Schule\\5BI\\INFI\\AI\\ID3_Git\\ID3\\ID3Baum\\ID3Baum\\ID3Baum.csproj",
       "projectName": "ID3Baum",
-      "projectPath": "D:\\Schule\\5BI\\Infi_AI\\ID3\\ID3Baum\\ID3Baum\\ID3Baum.csproj",
+      "projectPath": "D:\\Schule\\5BI\\INFI\\AI\\ID3_Git\\ID3\\ID3Baum\\ID3Baum\\ID3Baum.csproj",
       "packagesPath": "C:\\Users\\nikla\\.nuget\\packages\\",
-      "outputPath": "D:\\Schule\\5BI\\Infi_AI\\ID3\\ID3Baum\\ID3Baum\\obj\\",
+      "outputPath": "D:\\Schule\\5BI\\INFI\\AI\\ID3_Git\\ID3\\ID3Baum\\ID3Baum\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\nikla\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -60,7 +60,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.100\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.101\\RuntimeIdentifierGraph.json"
       }
     }
   }
