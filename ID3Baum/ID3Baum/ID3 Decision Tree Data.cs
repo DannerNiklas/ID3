@@ -28,7 +28,7 @@ Enum[][] data = new Enum[][] {
 
 DecisionTree decisionTree = new DecisionTree();
 var rootNode = decisionTree.Train<Play>(data);
-Play result = rootNode.Evaluate(new Enum[] { Outlook.Sunny, Humidity.Normal });
+Play result = rootNode.Evaluate(new Enum[] { Outlook.Rain, Humidity.High, Wind.Strong });
 Console.WriteLine("Result: " + result);
 public class DecisionTree
 {
@@ -66,6 +66,7 @@ public class DecisionTree
     }
     private Node<T> LearnData<T>(Enum[][] baseData)
     {
+        List<string> typesToIgnore = new();
 
         Type labelType = typeof(T);
         Node<T> rootNode = new Node<T>();
@@ -123,9 +124,15 @@ public class DecisionTree
                     {
                         if (currentLabelValues[i] == currentLabelValues.Sum() && currentLabelValues.Sum() != 0)
                         {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine(items.GetValue(l).GetType().GetEnumNames()[l]);
+                            Console.WriteLine((Enum)items.GetValue(l));
+                            Console.ForegroundColor = ConsoleColor.White;
                             Node<T> resultNode = new Node<T>(labelType, default(T));
                             resultNode.Result = (T)Enum.Parse(typeof(T), i.ToString(), true);
-                            rootNode.Children.Add((items.GetValue(l).GetType().GetEnumNames()[l], resultNode)); //enum is e.g. sunny or high
+                            //rootNode.Children.Add((items.GetValue(l).GetType().GetEnumNames()[l], resultNode)); //enum is e.g. sunny or high
+                            rootNode.Children.Add(((Enum)items.GetValue(l), resultNode)); //enum is e.g. sunny or high
+                            typesToIgnore.Add(items.GetValue(l).GetType().GetEnumNames()[l]);
                         }
                     }
 
@@ -163,9 +170,10 @@ public class DecisionTree
             var splittedData = SplitData(baseData, rootNodeIndex);//Splitting the dataset at the root node!
             for (int i = 0; i < splittedData.Count; i++)
             {
-                if (splittedData[i].Any())
+                if (splittedData[i].Any() && !typesToIgnore.Contains(baseData[0][rootNodeIndex].GetType().GetEnumNames()[i])) //TODO: FILTER OUT LABEL
                 {
-                    rootNode.Children.Add((baseData[0][rootNodeIndex].GetType().GetEnumNames()[i], LearnData<T>(splittedData[i])));
+                    //rootNode.Children.Add((baseData[0][rootNodeIndex].GetType().GetEnumNames()[i], LearnData<T>(splittedData[i])));
+                    rootNode.Children.Add(((Enum)Enum.GetValues(baseData[0][rootNodeIndex].GetType()).GetValue(i), LearnData<T>(splittedData[i])));
                 }
             }
         }
