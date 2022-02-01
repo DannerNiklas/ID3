@@ -28,22 +28,21 @@ Enum[][] data = new Enum[][] {
 
 DecisionTree decisionTree = new DecisionTree();
 var rootNode = decisionTree.Train<Play>(data);
-//Play result = rootNode.Evaluate(new Enum[] {Outlook.Sunny, Humidity.Normal});
-//Console.WriteLine(result);
-public class DecisionTree 
+Play result = rootNode.Evaluate(new Enum[] { Outlook.Sunny, Humidity.Normal });
+Console.WriteLine("Result: " + result);
+public class DecisionTree
 {
-    Type LabelType { get; }
-
-    public Node Train<T>(Enum[][] data)
+    public Node<T> Train<T>(Enum[][] data)
     {
-        T label;
+        Type labelType = typeof(T);
+        //Getting the label
+        Array labelDatas = Enum.GetValues(labelType);
         // Enum values as "Enum" example
         Array enumValues = Enum.GetValues(data[0][0].GetType());
         foreach (var enumItem in enumValues)
             Console.WriteLine(enumItem);
 
         //User gibt den Datentyp des Labels an
-        Type labelType = typeof(T);
         //getting label index:
         int labelIndex = 0;
         for (int i = 0; i < data[0].Length; i++)
@@ -57,14 +56,23 @@ public class DecisionTree
         //Step 1: Getting the element with the highgest information gain.
         //Step 1.1: Calculating the total entropy of the dataset
 
-        //Getting the label
-        var labelDatas = Enum.GetValues(labelType);
-
         //Now calculating the entropy for each attribute: 
-        LearnData(data);
+
+
+        return LearnData<T>(data);
+        //Node<T> resultNode = new Node<T>(labelType, default(T));
+        //resultNode.Result = labelDatas[i];
+        //return resultNode;
     }
-    void LearnData(Enum[][] baseData)
+    private Node<T> LearnData<T>(Enum[][] baseData)
     {
+
+        Type labelType = typeof(T);
+        Node<T> rootNode = new Node<T>();
+
+
+        //Getting the label
+        Array labelDatas = Enum.GetValues(labelType);
         //Get local total entropy: 
         int[] labelValues = new int[labelDatas.Length]; //Values of the labels (How often does it appear?)
 
@@ -73,12 +81,13 @@ public class DecisionTree
         {
             for (int j = 0; j < baseData[i].Length; j++)
             {
-                if (baseData[i][j].GetType() == LabelType)
+                if (baseData[i][j].GetType() == labelType)
                     labelValues[(int)((object)baseData[i][j])] += 1;
             }
         }
         List<int> labelValuesList = labelValues.ToList();
         double totalEntropy = DecisionMethods.Entropy(labelValuesList);
+        Console.WriteLine("Local total entropy: " + totalEntropy);
 
         //The information gain of the label is double MaxValue to not get problems with the index (in case the label is in the middle of the dataset) 
         List<double> informationGains = new();
@@ -87,22 +96,23 @@ public class DecisionTree
         {
             List<double> entropies = new(); //contains entropy value
             List<int> appearances = new(); // the times the value appears ("Si")
-            foreach (var item in Enum.GetValues(enumInTable.GetType()))
+            var items = Enum.GetValues(enumInTable.GetType());
+            for (int l = 0; l < items.Length; l++)
             {
-                if (item.GetType() != LabelType) //preventing a loop over the tag and the current root node!
+                if (items.GetValue(l).GetType() != labelType) //preventing a loop over the tag and the current root node!
                 {
                     int[] currentLabelValues = new int[labelDatas.Length]; //Values of the labels (How often does it appear?)
                     Console.WriteLine("-----------------");
-                    Console.WriteLine("Enum: " + item);
+                    Console.WriteLine("Enum: " + items.GetValue(l));
                     for (int i = 0; i < baseData.Length; i++)
                     {
                         for (int j = 0; j < baseData[i].Length; j++)
                         {
-                            if ((int)((object)baseData[i][j]) == (int)((object)item) && item.GetType() == baseData[i][j].GetType())
+                            if ((int)((object)baseData[i][j]) == (int)((object)items.GetValue(l)) && items.GetValue(l).GetType() == baseData[i][j].GetType())
                             {
                                 for (int k = 0; k < baseData[i].Length; k++)
                                 {
-                                    if (baseData[i][k].GetType() == LabelType)
+                                    if (baseData[i][k].GetType() == labelType)
                                         currentLabelValues[(int)((object)baseData[i][k])] += 1;
                                 }
                             }
@@ -113,9 +123,9 @@ public class DecisionTree
                     {
                         if (currentLabelValues[i] == currentLabelValues.Sum() && currentLabelValues.Sum() != 0)
                         {
-
-                            //Console.BackgroundColor = ConsoleColor.DarkRed;
-                            //Console.WriteLine("Test");
+                            Node<T> resultNode = new Node<T>(labelType, default(T));
+                            resultNode.Result = (T)Enum.Parse(typeof(T), i.ToString(), true);
+                            rootNode.Children.Add((items.GetValue(l).GetType().GetEnumNames()[l], resultNode)); //enum is e.g. sunny or high
                         }
                     }
 
@@ -135,18 +145,32 @@ public class DecisionTree
                 informationGains.Add(double.NaN);
         }
         Console.WriteLine("-----------------");
-        Console.WriteLine("Information Gains: ");
-        for (int i = 0; i < informationGains.Count; i++)
-            Console.WriteLine(baseData[0][i].GetType() + ": " + informationGains[i]);
-        Console.WriteLine("-----------------");
+
 
         //checking, which enums value has the highest information gain:
-        int rootNodeIndex = informationGains.IndexOf(informationGains.Max()); //This is the index of the item for the next knot! (This index now becomes the root of the decision tree)
-        Console.WriteLine("New root node is: " + baseData[0][rootNodeIndex].GetType());
+        if (informationGains.Count > 0)
+        {
+            Console.WriteLine("Information Gains: ");
+            for (int i = 0; i < informationGains.Count; i++)
+                Console.WriteLine(baseData[0][i].GetType() + ": " + informationGains[i]);
+            Console.WriteLine("-----------------");
 
-        //We now calculate the values for the subset: 
-        foreach (var subSet in SplitData(baseData, rootNodeIndex)) //Splitting the dataset at the root node!
-            LearnData(subSet);
+            int rootNodeIndex = informationGains.IndexOf(informationGains.Max()); //This is the index of the item for the next knot! (This index now becomes the root of the decision tree)
+            Console.WriteLine("New root node is: " + baseData[0][rootNodeIndex].GetType());
+            rootNode.AttrType = baseData[0][rootNodeIndex].GetType();
+            //We now calculate the values for the subset: 
+
+            var splittedData = SplitData(baseData, rootNodeIndex);//Splitting the dataset at the root node!
+            for (int i = 0; i < splittedData.Count; i++)
+            {
+                if (splittedData[i].Any())
+                {
+                    rootNode.Children.Add((baseData[0][rootNodeIndex].GetType().GetEnumNames()[i], LearnData<T>(splittedData[i])));
+                }
+            }
+        }
+
+        return rootNode;
     }
 
     List<Enum[][]> SplitData(Enum[][] dataToSplit, int splitTypeIndex)

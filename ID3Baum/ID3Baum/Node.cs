@@ -6,22 +6,31 @@ using System.Threading.Tasks;
 
 namespace ID3Baum
 {
-    internal class Node
+    public class Node<T>
     {
-        public int AttrIdx { get; set; }
-        public List<Node> Children { get; set; }
-        public Type Result { get; set; }
+        public Type AttrType { get; set; }
+        public List<(string, Node<T>)> Children { get; set; }
+        public T? Result { get; set; }
 
-        public Node(int attrIdx, Type result )
+        public Node(Type attrType, T? result)
         {
-            AttrIdx = attrIdx;
+            AttrType = attrType;
             Result = result;
             Children = new();
         }
 
-        public Enum Evaluate(Enum[] data)
+        public Node()
         {
-            return data[0];
+            Children = new();
+        }
+
+        public T Evaluate(Enum[] data)
+        {
+            for (int i = 0; i < length; i++)
+            {
+
+            }
+            return default(T);
         }
 
     }
