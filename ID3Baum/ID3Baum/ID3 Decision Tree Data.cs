@@ -119,26 +119,6 @@ public class DecisionTree
                             }
                         }
                     }
-                    //Check if the labels value is distinct. If it is, this part of the tree has converged
-                    for (int i = 0; i < currentLabelValues.Length; i++)
-                    {
-                        //if (currentLabelValues[i] == currentLabelValues.Sum() && currentLabelValues.Sum() != 0)
-                        //{
-                        //    Console.ForegroundColor = ConsoleColor.Red;
-                        //    Console.WriteLine((Enum)items.GetValue(l));
-                        //    Console.WriteLine((T)Enum.Parse(typeof(T), i.ToString(), true));
-                        //    Console.ForegroundColor = ConsoleColor.White;
-
-                        //    Node<T> resultNode = new Node<T>(labelType, default(T));
-                        //    resultNode.Result = (T)Enum.Parse(typeof(T), i.ToString(), true);
-                        //    Console.WriteLine("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
-                        //    Console.WriteLine((Enum)items.GetValue(l));
-                        //    Console.WriteLine("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
-                        //    rootNode.Children.Add(((Enum)items.GetValue(l), resultNode)); //enum is e.g. sunny or high
-                        //    typesToIgnore.Add(items.GetValue(l).GetType().GetEnumNames()[l]);
-                        //}
-                    }
-
                     List<int> currentLabelValuesList = currentLabelValues.ToList();
                     entropies.Add(DecisionMethods.Entropy(currentLabelValuesList));
                     appearances.Add(currentLabelValues.Sum());
@@ -163,6 +143,7 @@ public class DecisionTree
             Console.WriteLine("Information Gains: ");
             for (int i = 0; i < informationGains.Count; i++)
             {
+                //Check if the information gain  is 0. If it is, this part of the tree has converged - the label is returned!
                 if (informationGains[i] == 0) //Abruchbedingung
                 {
                     Node<T> resultNode = new Node<T>(labelType, default(T));
@@ -197,22 +178,28 @@ public class DecisionTree
         return rootNode;
     }
 
+    /// <summary>
+    /// Splits a given dataset by the specified index of the "root" datatype that will be used to split
+    /// </summary>
+    /// <param name="dataToSplit"></param>
+    /// <param name="splitTypeIndex"></param>
+    /// <returns></returns>
     List<Enum[][]> SplitData(Enum[][] dataToSplit, int splitTypeIndex)
     {
-        Type splitType = dataToSplit[0][splitTypeIndex].GetType();
+        Type splitType = dataToSplit[0][splitTypeIndex].GetType(); //The type to split byy 
 
-        List<Enum[][]> splittedData = new();
+        List<Enum[][]> splittedData = new(); //Placeholder to modify the dataarray 
 
-        foreach (var splitTypeElement in Enum.GetValues(splitType))
+        foreach (var splitTypeElement in Enum.GetValues(splitType)) //Looping through each value of the Enum we are splitting by 
         {
             Console.WriteLine(splitTypeElement);
-            Enum[][] splittedDataPart = dataToSplit.Where(x => x[splitTypeIndex].Equals(splitTypeElement)).ToArray();
-            List<Enum[]> newSplittedDataPart = new();
-            for (int i = 0; i < splittedDataPart.Length; i++)
+            Enum[][] splittedDataPart = dataToSplit.Where(x => x[splitTypeIndex].Equals(splitTypeElement)).ToArray(); //Getting the part of the data that contains the enum value
+            List<Enum[]> newSplittedDataPart = new(); //Placeholder  list that will later be converted to an array
+            for (int i = 0; i < splittedDataPart.Length; i++) //Looping through each row of the splitted data to remove the element we are splitting by
             {
-                List<Enum> splittedDataPartList = splittedDataPart[i].ToList();
-                splittedDataPartList.RemoveAll(x => x.Equals(splitTypeElement));
-                newSplittedDataPart.Add(splittedDataPartList.ToArray());
+                List<Enum> splittedDataPartList = splittedDataPart[i].ToList(); //converting to a list to be able to modify it
+                splittedDataPartList.RemoveAll(x => x.Equals(splitTypeElement)); //Removing the element we are splitting by from the row
+                newSplittedDataPart.Add(splittedDataPartList.ToArray()); //Converting it back to an array to return it
             }
 
             splittedData.Add(newSplittedDataPart.ToArray());
