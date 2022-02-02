@@ -26,21 +26,32 @@ Enum[][] data = new Enum[][] {
     new Enum[] { Outlook.Rain, Temp.Mild, Humidity.High, Wind.Strong, Play.No }
 };
 
+//Testing the Decision tree
 DecisionTree decisionTree = new DecisionTree();
 var rootNode = decisionTree.Train<Play>(data);
-Play result = rootNode.Evaluate(new Enum[] { Outlook.Sunny, Temp.Cold, Humidity.High });
-Console.WriteLine("Result: " + result);
+Console.ForegroundColor = ConsoleColor.Cyan;
+Console.WriteLine("\nFinsihed the tree");
+Console.WriteLine("-----------------");
+Enum[] data_to_evaluate = new Enum[] { Outlook.Sunny, Temp.Cold, Humidity.High };
+Play result = rootNode.Evaluate(data_to_evaluate);
+Console.WriteLine("Data:");
+foreach (var value in data_to_evaluate)
+    Console.Write(value + " ");
+Console.WriteLine("\nResult: " + result);
+
+Console.ForegroundColor = ConsoleColor.White;
+
 public class DecisionTree
 {
+    /// <summary>
+    /// Train an ID3 Decision Tree based on a given dataset and the labeltype T
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="data"></param>
+    /// <returns></returns>
     public Node<T> Train<T>(Enum[][] data)
     {
         Type labelType = typeof(T);
-        //Getting the label
-        Array labelDatas = Enum.GetValues(labelType);
-        // Enum values as "Enum" example
-        Array enumValues = Enum.GetValues(data[0][0].GetType());
-        foreach (var enumItem in enumValues)
-            Console.WriteLine(enumItem);
 
         //User gibt den Datentyp des Labels an
         //getting label index:
@@ -57,6 +68,12 @@ public class DecisionTree
         //Now calculating the entropy for each attribute: 
         return LearnData<T>(data);
     }
+    /// <summary>
+    /// Internal Function used that is called recursively, used to build the ID3 Tree
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="baseData"></param>
+    /// <returns></returns>
     private Node<T> LearnData<T>(Enum[][] baseData)
     {
         Type labelType = typeof(T);
@@ -74,7 +91,7 @@ public class DecisionTree
             for (int j = 0; j < baseData[i].Length; j++)
                 if (baseData[i][j].GetType() == labelType)
                     labelValues[(int)((object)baseData[i][j])] += 1;
-             
+
         List<int> labelValuesList = labelValues.ToList(); //Converting it to a list to pass it to the entropy function
         double totalEntropy = DecisionMethods.Entropy(labelValuesList);
         Console.WriteLine("Local total entropy: " + totalEntropy);
@@ -99,7 +116,7 @@ public class DecisionTree
                             if ((int)((object)baseData[i][j]) == (int)((object)items.GetValue(l)) && items.GetValue(l).GetType() == baseData[i][j].GetType()) //Checking if it's the same enum value/element
                                 for (int k = 0; k < baseData[i].Length; k++) //Now looping through to count the label appearnace 
                                     if (baseData[i][k].GetType() == labelType)
-                                        currentLabelValues[(int)((object)baseData[i][k])] += 1;                                            
+                                        currentLabelValues[(int)((object)baseData[i][k])] += 1;
                     //Now the local entropy of the according enum value is calculated
                     List<int> currentLabelValuesList = currentLabelValues.ToList();
                     entropies.Add(DecisionMethods.Entropy(currentLabelValuesList));
@@ -130,8 +147,8 @@ public class DecisionTree
                 {
                     Node<T> resultNode = new Node<T>(labelType, default(T)); //The node that will be returned
                     foreach (var item in baseData[0]) //adding the label value to it (itering over the first row of the current dataset to get the value. As the value is distinct in the current dataset this is okay
-                        if(item.GetType() == labelType)
-                            resultNode.Result = (T)Enum.Parse(typeof(T), ((int)(object)item).ToString(), true);              
+                        if (item.GetType() == labelType)
+                            resultNode.Result = (T)Enum.Parse(typeof(T), ((int)(object)item).ToString(), true);
                     return resultNode;
                 }
                 Console.WriteLine(baseData[0][i].GetType() + ": " + informationGains[i]);
@@ -150,7 +167,7 @@ public class DecisionTree
             for (int i = 0; i < splittedData.Count; i++) //Finally, every dataset that doesn't have a distinct answer yet is iterated over recursively to find a result. 
                 if (splittedData[i].Any())
                     rootNode.Children.Add(((Enum)Enum.GetValues(baseData[0][rootNodeIndex].GetType()).GetValue(i), LearnData<T>(splittedData[i])));
-            
+
         }
 
         return rootNode;
