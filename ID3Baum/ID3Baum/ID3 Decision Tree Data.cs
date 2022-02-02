@@ -28,7 +28,7 @@ Enum[][] data = new Enum[][] {
 
 DecisionTree decisionTree = new DecisionTree();
 var rootNode = decisionTree.Train<Play>(data);
-Play result = rootNode.Evaluate(new Enum[] { Outlook.Rain, Humidity.Normal, Wind.Strong });
+Play result = rootNode.Evaluate(new Enum[] { Outlook.Sunny, Temp.Cold, Humidity.High });
 Console.WriteLine("Result: " + result);
 public class DecisionTree
 {
@@ -46,10 +46,8 @@ public class DecisionTree
         //getting label index:
         int labelIndex = 0;
         for (int i = 0; i < data[0].Length; i++)
-        {
             if (data[0][i].GetType() == labelType)
                 labelIndex = i;
-        }
         Console.WriteLine();
         Console.WriteLine("Label DataType: " + labelType);
 
@@ -73,13 +71,10 @@ public class DecisionTree
         //The first step is to calculate the local total entropy of the dataset to later be able to calculate the information gain:
         //Step 1.1: Calculating the total entropy of the dataset
         for (int i = 0; i < baseData.Length; i++) //Looping through the dataset and counting each appearance of the labels values. E.g. that the labels "YES" value appears 3 times and the labels "NO" value appears 6 times.
-        {
             for (int j = 0; j < baseData[i].Length; j++)
-            {
                 if (baseData[i][j].GetType() == labelType)
                     labelValues[(int)((object)baseData[i][j])] += 1;
-            }
-        }
+             
         List<int> labelValuesList = labelValues.ToList(); //Converting it to a list to pass it to the entropy function
         double totalEntropy = DecisionMethods.Entropy(labelValuesList);
         Console.WriteLine("Local total entropy: " + totalEntropy);
@@ -100,17 +95,11 @@ public class DecisionTree
                     Console.WriteLine("-----------------");
                     Console.WriteLine("Enum: " + items.GetValue(l));
                     for (int i = 0; i < baseData.Length; i++) //Now looping over the entire current dataset again to count the appearances of the current type
-                    {
                         for (int j = 0; j < baseData[i].Length; j++) //each row of the current dataset
-                        {
                             if ((int)((object)baseData[i][j]) == (int)((object)items.GetValue(l)) && items.GetValue(l).GetType() == baseData[i][j].GetType()) //Checking if it's the same enum value/element
-                            {
                                 for (int k = 0; k < baseData[i].Length; k++) //Now looping through to count the label appearnace 
                                     if (baseData[i][k].GetType() == labelType)
-                                        currentLabelValues[(int)((object)baseData[i][k])] += 1;
-                            }
-                        }
-                    }
+                                        currentLabelValues[(int)((object)baseData[i][k])] += 1;                                            
                     //Now the local entropy of the according enum value is calculated
                     List<int> currentLabelValuesList = currentLabelValues.ToList();
                     entropies.Add(DecisionMethods.Entropy(currentLabelValuesList));
