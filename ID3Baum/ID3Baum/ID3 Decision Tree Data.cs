@@ -28,7 +28,7 @@ Enum[][] data = new Enum[][] {
 
 DecisionTree decisionTree = new DecisionTree();
 var rootNode = decisionTree.Train<Play>(data);
-Play result = rootNode.Evaluate(new Enum[] { Outlook.Rain, Humidity.High, Wind.Strong });
+Play result = rootNode.Evaluate(new Enum[] { Outlook.Rain, Humidity.Normal, Wind.Strong });
 Console.WriteLine("Result: " + result);
 public class DecisionTree
 {
@@ -122,18 +122,21 @@ public class DecisionTree
                     //Check if the labels value is distinct. If it is, this part of the tree has converged
                     for (int i = 0; i < currentLabelValues.Length; i++)
                     {
-                        if (currentLabelValues[i] == currentLabelValues.Sum() && currentLabelValues.Sum() != 0)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine(items.GetValue(l).GetType().GetEnumNames()[l]);
-                            Console.WriteLine((Enum)items.GetValue(l));
-                            Console.ForegroundColor = ConsoleColor.White;
-                            Node<T> resultNode = new Node<T>(labelType, default(T));
-                            resultNode.Result = (T)Enum.Parse(typeof(T), i.ToString(), true);
-                            //rootNode.Children.Add((items.GetValue(l).GetType().GetEnumNames()[l], resultNode)); //enum is e.g. sunny or high
-                            rootNode.Children.Add(((Enum)items.GetValue(l), resultNode)); //enum is e.g. sunny or high
-                            typesToIgnore.Add(items.GetValue(l).GetType().GetEnumNames()[l]);
-                        }
+                        //if (currentLabelValues[i] == currentLabelValues.Sum() && currentLabelValues.Sum() != 0)
+                        //{
+                        //    Console.ForegroundColor = ConsoleColor.Red;
+                        //    Console.WriteLine((Enum)items.GetValue(l));
+                        //    Console.WriteLine((T)Enum.Parse(typeof(T), i.ToString(), true));
+                        //    Console.ForegroundColor = ConsoleColor.White;
+
+                        //    Node<T> resultNode = new Node<T>(labelType, default(T));
+                        //    resultNode.Result = (T)Enum.Parse(typeof(T), i.ToString(), true);
+                        //    Console.WriteLine("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
+                        //    Console.WriteLine((Enum)items.GetValue(l));
+                        //    Console.WriteLine("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
+                        //    rootNode.Children.Add(((Enum)items.GetValue(l), resultNode)); //enum is e.g. sunny or high
+                        //    typesToIgnore.Add(items.GetValue(l).GetType().GetEnumNames()[l]);
+                        //}
                     }
 
                     List<int> currentLabelValuesList = currentLabelValues.ToList();
@@ -159,20 +162,33 @@ public class DecisionTree
         {
             Console.WriteLine("Information Gains: ");
             for (int i = 0; i < informationGains.Count; i++)
+            {
+                if (informationGains[i] == 0) //Abruchbedingung
+                {
+                    Node<T> resultNode = new Node<T>(labelType, default(T));
+                    foreach (var item in baseData[0])
+                    {
+                        if(item.GetType() == labelType)
+                            resultNode.Result = (T)Enum.Parse(typeof(T), ((int)(object)item).ToString(), true);
+                    }
+                    return resultNode;
+                }
                 Console.WriteLine(baseData[0][i].GetType() + ": " + informationGains[i]);
+            }
             Console.WriteLine("-----------------");
 
             int rootNodeIndex = informationGains.IndexOf(informationGains.Max()); //This is the index of the item for the next knot! (This index now becomes the root of the decision tree)
             Console.WriteLine("New root node is: " + baseData[0][rootNodeIndex].GetType());
             rootNode.AttrType = baseData[0][rootNodeIndex].GetType();
             //We now calculate the values for the subset: 
-
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine(baseData[0][rootNodeIndex].GetType());
             var splittedData = SplitData(baseData, rootNodeIndex);//Splitting the dataset at the root node!
+            Console.ForegroundColor = ConsoleColor.White;
             for (int i = 0; i < splittedData.Count; i++)
             {
                 if (splittedData[i].Any() && !typesToIgnore.Contains(baseData[0][rootNodeIndex].GetType().GetEnumNames()[i])) //TODO: FILTER OUT LABEL
                 {
-                    //rootNode.Children.Add((baseData[0][rootNodeIndex].GetType().GetEnumNames()[i], LearnData<T>(splittedData[i])));
                     rootNode.Children.Add(((Enum)Enum.GetValues(baseData[0][rootNodeIndex].GetType()).GetValue(i), LearnData<T>(splittedData[i])));
                 }
             }
@@ -183,15 +199,14 @@ public class DecisionTree
 
     List<Enum[][]> SplitData(Enum[][] dataToSplit, int splitTypeIndex)
     {
-        Console.WriteLine(splitTypeIndex);
-        Console.WriteLine(dataToSplit.Length);
         Type splitType = dataToSplit[0][splitTypeIndex].GetType();
 
         List<Enum[][]> splittedData = new();
 
         foreach (var splitTypeElement in Enum.GetValues(splitType))
         {
-            Enum[][] splittedDataPart = dataToSplit.Where(x => (int)((object)x[splitTypeIndex]) == (int)((object)splitTypeElement)).ToArray();
+            Console.WriteLine(splitTypeElement);
+            Enum[][] splittedDataPart = dataToSplit.Where(x => x[splitTypeIndex].Equals(splitTypeElement)).ToArray();
             List<Enum[]> newSplittedDataPart = new();
             for (int i = 0; i < splittedDataPart.Length; i++)
             {

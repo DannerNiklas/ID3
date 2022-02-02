@@ -42,8 +42,6 @@ namespace ID3Baum
                 }
             }
             throw new DataMisalignedException();
-
-            //return default(T);
         }
 
     }
