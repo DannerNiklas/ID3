@@ -54,31 +54,25 @@ public class DecisionTree
         Console.WriteLine("Label DataType: " + labelType);
 
         //Step 1: Getting the element with the highgest information gain.
-        //Step 1.1: Calculating the total entropy of the dataset
+
 
         //Now calculating the entropy for each attribute: 
-
-
         return LearnData<T>(data);
-        //Node<T> resultNode = new Node<T>(labelType, default(T));
-        //resultNode.Result = labelDatas[i];
-        //return resultNode;
     }
     private Node<T> LearnData<T>(Enum[][] baseData)
     {
-        List<string> typesToIgnore = new();
-
         Type labelType = typeof(T);
         Node<T> rootNode = new Node<T>();
 
-
-        //Getting the label
+        //Getting the labels values (For example YES or NO)
         Array labelDatas = Enum.GetValues(labelType);
         //Get local total entropy: 
-        int[] labelValues = new int[labelDatas.Length]; //Values of the labels (How often does it appear?)
+        int[] labelValues = new int[labelDatas.Length]; //Values of the labels (How often does it appear?). Used to calculate the entropy
 
         Console.WriteLine("-----------------");
-        for (int i = 0; i < baseData.Length; i++)
+        //The first step is to calculate the local total entropy of the dataset to later be able to calculate the information gain:
+        //Step 1.1: Calculating the total entropy of the dataset
+        for (int i = 0; i < baseData.Length; i++) //Looping through the dataset and counting each appearance of the labels values. E.g. that the labels "YES" value appears 3 times and the labels "NO" value appears 6 times.
         {
             for (int j = 0; j < baseData[i].Length; j++)
             {
@@ -86,42 +80,41 @@ public class DecisionTree
                     labelValues[(int)((object)baseData[i][j])] += 1;
             }
         }
-        List<int> labelValuesList = labelValues.ToList();
+        List<int> labelValuesList = labelValues.ToList(); //Converting it to a list to pass it to the entropy function
         double totalEntropy = DecisionMethods.Entropy(labelValuesList);
         Console.WriteLine("Local total entropy: " + totalEntropy);
 
-        //The information gain of the label is double MaxValue to not get problems with the index (in case the label is in the middle of the dataset) 
+        //The information gain of the label is set to NaN to not get problems with the index (in case the label is in the middle of the dataset). 
         List<double> informationGains = new();
-        var enumsInTable = baseData[0];
-        foreach (var enumInTable in enumsInTable)
+        var enumsInTable = baseData[0]; //THe first row of the dataset 
+        foreach (var enumInTable in enumsInTable) //looping through every Enum Type of the current dataset
         {
             List<double> entropies = new(); //contains entropy value
             List<int> appearances = new(); // the times the value appears ("Si")
             var items = Enum.GetValues(enumInTable.GetType());
-            for (int l = 0; l < items.Length; l++)
+            for (int l = 0; l < items.Length; l++) //Looping over each value of the enum type
             {
                 if (items.GetValue(l).GetType() != labelType) //preventing a loop over the tag and the current root node!
                 {
                     int[] currentLabelValues = new int[labelDatas.Length]; //Values of the labels (How often does it appear?)
                     Console.WriteLine("-----------------");
                     Console.WriteLine("Enum: " + items.GetValue(l));
-                    for (int i = 0; i < baseData.Length; i++)
+                    for (int i = 0; i < baseData.Length; i++) //Now looping over the entire current dataset again to count the appearances of the current type
                     {
-                        for (int j = 0; j < baseData[i].Length; j++)
+                        for (int j = 0; j < baseData[i].Length; j++) //each row of the current dataset
                         {
-                            if ((int)((object)baseData[i][j]) == (int)((object)items.GetValue(l)) && items.GetValue(l).GetType() == baseData[i][j].GetType())
+                            if ((int)((object)baseData[i][j]) == (int)((object)items.GetValue(l)) && items.GetValue(l).GetType() == baseData[i][j].GetType()) //Checking if it's the same enum value/element
                             {
-                                for (int k = 0; k < baseData[i].Length; k++)
-                                {
+                                for (int k = 0; k < baseData[i].Length; k++) //Now looping through to count the label appearnace 
                                     if (baseData[i][k].GetType() == labelType)
                                         currentLabelValues[(int)((object)baseData[i][k])] += 1;
-                                }
                             }
                         }
                     }
+                    //Now the local entropy of the according enum value is calculated
                     List<int> currentLabelValuesList = currentLabelValues.ToList();
                     entropies.Add(DecisionMethods.Entropy(currentLabelValuesList));
-                    appearances.Add(currentLabelValues.Sum());
+                    appearances.Add(currentLabelValues.Sum()); //Counting the appearances for the info gain
                     Console.WriteLine(currentLabelValues[0]);
                     Console.WriteLine(currentLabelValues[1]);
                     Console.WriteLine("Entropie: " + entropies.Last());
@@ -132,26 +125,24 @@ public class DecisionTree
             if (entropies.Count > 0)
                 informationGains.Add(DecisionMethods.Gain(totalEntropy, entropies, appearances)); //0 is a placeholder!
             else
-                informationGains.Add(double.NaN);
+                informationGains.Add(double.NaN); //to prevent wrong indexing
         }
         Console.WriteLine("-----------------");
 
 
         //checking, which enums value has the highest information gain:
-        if (informationGains.Count > 0)
+        if (informationGains.Count > 0) //Making sure there are still info gains that have been calculated
         {
             Console.WriteLine("Information Gains: ");
-            for (int i = 0; i < informationGains.Count; i++)
+            for (int i = 0; i < informationGains.Count; i++) //Checking each information gain to see if a distinct label has been found yet
             {
                 //Check if the information gain  is 0. If it is, this part of the tree has converged - the label is returned!
                 if (informationGains[i] == 0) //Abruchbedingung
                 {
-                    Node<T> resultNode = new Node<T>(labelType, default(T));
-                    foreach (var item in baseData[0])
-                    {
+                    Node<T> resultNode = new Node<T>(labelType, default(T)); //The node that will be returned
+                    foreach (var item in baseData[0]) //adding the label value to it (itering over the first row of the current dataset to get the value. As the value is distinct in the current dataset this is okay
                         if(item.GetType() == labelType)
-                            resultNode.Result = (T)Enum.Parse(typeof(T), ((int)(object)item).ToString(), true);
-                    }
+                            resultNode.Result = (T)Enum.Parse(typeof(T), ((int)(object)item).ToString(), true);              
                     return resultNode;
                 }
                 Console.WriteLine(baseData[0][i].GetType() + ": " + informationGains[i]);
@@ -160,19 +151,17 @@ public class DecisionTree
 
             int rootNodeIndex = informationGains.IndexOf(informationGains.Max()); //This is the index of the item for the next knot! (This index now becomes the root of the decision tree)
             Console.WriteLine("New root node is: " + baseData[0][rootNodeIndex].GetType());
-            rootNode.AttrType = baseData[0][rootNodeIndex].GetType();
+            rootNode.AttrType = baseData[0][rootNodeIndex].GetType(); //Setting the Attribute Type of the current node
             //We now calculate the values for the subset: 
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine(baseData[0][rootNodeIndex].GetType());
             var splittedData = SplitData(baseData, rootNodeIndex);//Splitting the dataset at the root node!
             Console.ForegroundColor = ConsoleColor.White;
-            for (int i = 0; i < splittedData.Count; i++)
-            {
-                if (splittedData[i].Any() && !typesToIgnore.Contains(baseData[0][rootNodeIndex].GetType().GetEnumNames()[i])) //TODO: FILTER OUT LABEL
-                {
+            //Iterating over the splitted dataset of the root node
+            for (int i = 0; i < splittedData.Count; i++) //Finally, every dataset that doesn't have a distinct answer yet is iterated over recursively to find a result. 
+                if (splittedData[i].Any())
                     rootNode.Children.Add(((Enum)Enum.GetValues(baseData[0][rootNodeIndex].GetType()).GetValue(i), LearnData<T>(splittedData[i])));
-                }
-            }
+            
         }
 
         return rootNode;
